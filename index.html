@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Editor's Stash — Your Editing Best Friend</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#020407;--bg1:#04080f;--bg2:#070e1c;--bg3:#0a1428;--blue:#2d7dff;--blue2:rgba(45,125,255,0.12);--line:rgba(255,255,255,0.07);--line2:rgba(45,125,255,0.25);--text:#f0f4ff;--t2:#8fa3c8;--t3:#4a6080;--green:#00e5a0;--glow:rgba(45,125,255,0.35)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+#bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 48px;height:64px;background:rgba(2,4,7,0.8);backdrop-filter:blur(24px);border-bottom:1px solid var(--line)}
+.nav-logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:15px;letter-spacing:-0.02em}
+.nav-logo .dot{width:7px;height:7px;border-radius:50%;background:var(--blue);box-shadow:0 0 8px var(--blue)}
+.nav-logo span{color:var(--blue)}
+.nav-links{display:flex;gap:28px}
+.nav-links a{color:var(--t2);font-size:13px;font-weight:500;transition:color 0.15s}
+.nav-links a:hover{color:var(--text)}
+.nav-btn{background:var(--blue);color:#fff;border:none;border-radius:8px;padding:9px 20px;font-family:'Sora',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:7px;box-shadow:0 0 20px var(--glow);transition:all 0.15s}
+.nav-btn:hover{background:#4a8eff;transform:translateY(-1px)}
+@media(max-width:768px){nav{padding:0 20px}.nav-links{display:none}}
+.hero{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:100px 24px 60px}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(45,125,255,0.1);border:1px solid rgba(45,125,255,0.25);border-radius:100px;padding:6px 16px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--blue);margin-bottom:32px;animation:fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) both}
+.hero-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--blue);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(1.4)}}
+.hero-eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--t3);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:20px;animation:fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) 0.05s both}
+h1{font-size:clamp(48px,8vw,96px);font-weight:900;line-height:0.95;letter-spacing:-0.04em;max-width:900px;animation:fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) 0.1s both}
+h1 .accent{color:var(--blue)}
+h1 .dim{color:var(--t3)}
+.hero-sub{margin-top:28px;font-size:18px;color:var(--t2);line-height:1.6;max-width:500px;font-weight:400;animation:fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) 0.2s both}
+.hero-actions{display:flex;gap:12px;margin-top:48px;flex-wrap:wrap;justify-content:center;animation:fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) 0.3s both}
+.btn-primary{background:var(--blue);color:#fff;border:none;border-radius:10px;padding:15px 30px;font-family:'Sora',sans-serif;font-size:15px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:9px;box-shadow:0 0 40px var(--glow),0 4px 20px rgba(0,0,0,0.4);transition:all 0.15s}
+.btn-primary:hover{background:#4a8eff;transform:translateY(-2px)}
+.btn-ghost{background:rgba(255,255,255,0.05);border:1px solid var(--line);color:var(--t2);border-radius:10px;padding:15px 30px;font-family:'Sora',sans-serif;font-size:15px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:9px;backdrop-filter:blur(12px);transition:all 0.15s}
+.btn-ghost:hover{border-color:var(--line2);color:var(--text)}
+.hero-tags{display:flex;gap:8px;margin-top:32px;flex-wrap:wrap;justify-content:center;animation:fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) 0.4s both}
+.tag{background:var(--bg2);border:1px solid var(--line);border-radius:100px;padding:5px 14px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t3)}
+.app-preview{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:0 24px;animation:fadeUp 0.8s cubic-bezier(0.16,1,0.3,1) 0.45s both}
+.window{border-radius:14px;overflow:hidden;border:1px solid var(--line);box-shadow:0 48px 140px rgba(0,0,0,0.85),0 0 0 1px rgba(255,255,255,0.04),0 0 100px rgba(45,125,255,0.08);background:var(--bg1)}
+.win-bar{background:#04060d;padding:11px 16px;display:flex;align-items:center;gap:7px;border-bottom:1px solid var(--line)}
+.wdot{width:12px;height:12px;border-radius:50%}
+.win-title{flex:1;text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--t3)}
+.win-body{display:flex;height:380px}
+.win-sb{width:54px;background:rgba(4,6,13,0.7);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:12px 0;gap:8px}
+.wsb{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center}
+.wsb.on{background:rgba(45,125,255,0.15);position:relative}
+.wsb.on::before{content:'';position:absolute;left:-6px;width:3px;height:18px;border-radius:2px;background:var(--blue)}
+.wsb img{width:15px;height:15px;filter:invert(1) opacity(0.28)}
+.wsb.on img{filter:invert(0.2) sepia(1) saturate(8) hue-rotate(200deg) brightness(1.5)}
+.win-main{flex:1;padding:20px;display:flex;flex-direction:column;gap:12px;overflow:hidden}
+.wph{font-size:18px;font-weight:800;letter-spacing:-0.02em}
+.wsub{font-size:10px;color:var(--t3);font-family:'JetBrains Mono',monospace;margin-top:1px}
+.wbox{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.winp{background:rgba(255,255,255,0.04);border:1px solid var(--line);border-radius:7px;padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t3);display:flex;align-items:center;gap:7px}
+.wchips{display:flex;gap:5px;flex-wrap:wrap}
+.wchip{padding:3px 9px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:9px;background:var(--bg3);border:1px solid var(--line);color:var(--t3)}
+.wchip.on{background:rgba(45,125,255,0.15);border-color:rgba(45,125,255,0.3);color:var(--blue)}
+.witem{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:9px;padding:10px;display:flex;align-items:center;gap:10px}
+.wthmb{width:34px;height:34px;border-radius:6px;background:linear-gradient(135deg,#1a3fa0,#2d7dff);flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.winame{font-size:10px;font-weight:600;color:rgba(255,255,255,0.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+.wtrack{height:2px;background:rgba(255,255,255,0.07);border-radius:2px;margin-top:4px}
+.wfill{height:100%;border-radius:2px;background:var(--blue);width:0}
+.wbtns{display:flex;gap:4px;margin-left:auto;flex-shrink:0}
+.wbtn{padding:4px 9px;border-radius:4px;font-size:9px;font-weight:700;cursor:default;font-family:'Sora',sans-serif}
+.wbtn.p{background:var(--blue);color:#fff}
+.wbtn.s{background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.4)}
+section{position:relative;z-index:1}
+.si{max-width:1100px;margin:0 auto;padding:100px 24px}
+.slabel{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--blue);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.slabel::before{content:'';flex:0 0 20px;height:1px;background:var(--blue)}
+.stitle{font-size:clamp(30px,4vw,48px);font-weight:800;letter-spacing:-0.03em;line-height:1.1;margin-bottom:14px}
+.ssub{font-size:16px;color:var(--t2);line-height:1.65;max-width:500px}
+
+/* DOWNLOADER */
+.dl-demo-sec{border-top:1px solid var(--line);background:linear-gradient(180deg,var(--bg1),var(--bg))}
+.dl-demo-inner{max-width:1100px;margin:0 auto;padding:100px 24px;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
+@media(max-width:800px){.dl-demo-inner{grid-template-columns:1fr;gap:48px}}
+.dl-steps{display:flex;flex-direction:column;gap:0}
+.dl-step{display:flex;gap:16px;align-items:flex-start;padding:20px 0;border-bottom:1px solid var(--line)}
+.dl-step:last-child{border-bottom:none}
+.dl-sn{flex-shrink:0;width:30px;height:30px;border-radius:8px;background:var(--blue2);border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--blue);font-weight:700;margin-top:2px}
+.dl-st{font-size:14px;font-weight:700;margin-bottom:4px}
+.dl-sd{font-size:13px;color:var(--t2);line-height:1.6}
+.dl-mockup{background:var(--bg1);border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
+.dm-hdr{padding:16px 18px;border-bottom:1px solid var(--line)}
+.dm-ht{font-size:14px;font-weight:800;letter-spacing:-0.02em}
+.dm-hs{font-size:10px;color:var(--t3);font-family:'JetBrains Mono',monospace;margin-top:1px}
+.dm-body{padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.dm-clip{background:rgba(45,125,255,0.08);border:1px solid rgba(45,125,255,0.2);border-radius:8px;padding:9px 12px;display:flex;align-items:center;gap:8px;font-size:11px;color:var(--t2)}
+.dm-clip-dot{width:6px;height:6px;border-radius:50%;background:var(--blue);flex-shrink:0;animation:pulse 2s infinite}
+.dm-url{background:rgba(255,255,255,0.04);border:1px solid var(--line);border-radius:7px;padding:9px 11px;display:flex;align-items:center;gap:7px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t3)}
+.dm-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.dm-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:0.1em}
+.dm-chips{display:flex;gap:4px}
+.dm-chip{padding:3px 8px;border-radius:4px;font-size:9px;font-family:'JetBrains Mono',monospace;background:var(--bg3);border:1px solid var(--line);color:var(--t3)}
+.dm-chip.on{background:rgba(45,125,255,0.15);border-color:rgba(45,125,255,0.3);color:var(--blue)}
+.dm-btn{background:var(--blue);color:#fff;border:none;border-radius:7px;padding:8px 14px;font-family:'Sora',sans-serif;font-size:11px;font-weight:700;cursor:default;display:flex;align-items:center;gap:5px;width:fit-content}
+.dm-div{height:1px;background:var(--line)}
+.dm-qlbl{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t3);letter-spacing:0.1em;text-transform:uppercase}
+.dm-item{background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:8px;padding:9px;display:flex;align-items:center;gap:8px}
+.dm-thumb{width:30px;height:30px;border-radius:5px;flex-shrink:0}
+.dm-iname{font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;color:rgba(255,255,255,0.75)}
+.dm-prog{height:2px;background:rgba(255,255,255,0.07);border-radius:2px;margin-top:4px}
+.dm-pf{height:100%;border-radius:2px;background:var(--blue)}
+.dm-acts{display:flex;gap:4px;margin-left:auto;flex-shrink:0}
+.dm-act{padding:3px 7px;border-radius:4px;font-size:9px;font-weight:700;cursor:default;font-family:'Sora',sans-serif}
+.dm-act.p{background:var(--blue);color:#fff}
+.dm-act.s{background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.4)}
+.dm-platforms{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding-top:6px}
+.dm-plat{background:var(--bg2);border:1px solid var(--line);border-radius:5px;padding:3px 9px;font-size:10px;color:var(--t2);display:flex;align-items:center;gap:4px;font-family:'JetBrains Mono',monospace}
+
+/* FEATURES */
+.feat-sec{border-top:1px solid var(--line)}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-top:56px}
+.fcard{background:rgba(255,255,255,0.025);border:1px solid var(--line);border-radius:16px;padding:28px;transition:all 0.2s;position:relative;overflow:hidden}
+.fcard::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.08) 50%,transparent)}
+.fcard:hover{border-color:rgba(45,125,255,0.2);background:rgba(45,125,255,0.04);transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,0.4)}
+.ficon{width:42px;height:42px;border-radius:10px;background:rgba(45,125,255,0.12);border:1px solid rgba(45,125,255,0.2);display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+.ficon img{width:18px;height:18px;filter:invert(0.2) sepia(1) saturate(8) hue-rotate(200deg) brightness(1.5)}
+.ftitle{font-size:16px;font-weight:700;margin-bottom:8px;letter-spacing:-0.01em}
+.fdesc{font-size:13px;color:var(--t2);line-height:1.65}
+.ftag{display:inline-block;margin-top:14px;background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.2);color:var(--green);font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 8px;border-radius:4px}
+
+/* SUPPORT */
+.sup-sec{border-top:1px solid var(--line);background:linear-gradient(135deg,rgba(45,125,255,0.03),transparent)}
+.sup-inner{max-width:1100px;margin:0 auto;padding:100px 24px;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
+@media(max-width:800px){.sup-inner{grid-template-columns:1fr;gap:48px}}
+.bwin{border-radius:12px;overflow:hidden;border:1px solid var(--line);box-shadow:0 24px 64px rgba(0,0,0,0.5);font-family:'JetBrains Mono',monospace}
+.bwin-top{background:#0a0aff;padding:32px 28px}
+.bwin-emoji{font-size:48px;margin-bottom:14px;display:block}
+.bwin-h{font-size:18px;font-weight:700;color:#fff;margin-bottom:10px;line-height:1.3}
+.bwin-b{font-size:11px;color:rgba(255,255,255,0.75);line-height:1.9}
+.bwin-foot{background:#000;padding:14px 28px;border-top:1px solid #1a1a1a;display:flex;justify-content:space-between;align-items:center}
+.bwin-mi{color:#5a8fff;font-size:11px}.bwin-no{color:#444;font-size:11px}
+.safe{margin-top:14px;padding:12px 14px;background:rgba(0,229,160,0.06);border:1px solid rgba(0,229,160,0.15);border-radius:9px;font-size:11px;color:var(--t2);line-height:1.9;font-family:'JetBrains Mono',monospace}
+.bsteps{display:flex;flex-direction:column;gap:16px}
+.bstep{display:flex;gap:14px;align-items:flex-start}
+.bstep-n{flex-shrink:0;width:30px;height:30px;border-radius:7px;background:rgba(45,125,255,0.1);border:1px solid rgba(45,125,255,0.25);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--blue)}
+.bstep-t{font-size:14px;font-weight:700;margin-bottom:3px}
+.bstep-d{font-size:13px;color:var(--t2);line-height:1.6}
+
+/* DOWNLOAD */
+.get-sec{border-top:1px solid var(--line);text-align:center}
+.dlcard{max-width:520px;margin:56px auto 0;background:rgba(45,125,255,0.06);border:1px solid rgba(45,125,255,0.18);border-radius:20px;padding:46px;position:relative;overflow:hidden}
+.dlcard::before{content:'';position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(45,125,255,0.12),transparent 70%);pointer-events:none}
+.dlver{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--blue);background:rgba(45,125,255,0.1);border:1px solid rgba(45,125,255,0.2);display:inline-block;padding:4px 12px;border-radius:100px;margin-bottom:18px}
+.dltitle{font-size:26px;font-weight:800;letter-spacing:-0.02em;margin-bottom:8px}
+.dlsub{font-size:14px;color:var(--t2);margin-bottom:32px;line-height:1.6}
+.dlbtn{width:100%;background:var(--blue);color:#fff;border:none;border-radius:11px;padding:16px;font-family:'Sora',sans-serif;font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 0 48px var(--glow);transition:all 0.15s}
+.dlbtn:hover{background:#4a8eff;transform:translateY(-2px)}
+.dlmeta{display:flex;justify-content:center;gap:16px;margin-top:16px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t3);flex-wrap:wrap}
+
+footer{position:relative;z-index:1;border-top:1px solid var(--line);padding:36px 48px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.flogo{font-weight:800;font-size:14px;letter-spacing:-0.02em}.flogo span{color:var(--blue)}
+.fnote{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--t3)}
+.flinks{display:flex;gap:20px}
+.flinks a{font-size:12px;color:var(--t3);transition:color 0.15s}.flinks a:hover{color:var(--t2)}
+@media(max-width:768px){footer{padding:28px 20px;flex-direction:column;text-align:center}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+.reveal{opacity:0;transform:translateY(28px);transition:opacity 0.8s cubic-bezier(0.16,1,0.3,1),transform 0.8s cubic-bezier(0.16,1,0.3,1)}
+.reveal.in{opacity:1;transform:none}
+.rd1{transition-delay:0.1s}.rd2{transition-delay:0.2s}.rd3{transition-delay:0.3s}
+
+.rec-card{background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:14px;padding:22px 18px;cursor:pointer;transition:all 0.2s;text-align:center}
+.rec-card:hover{border-color:rgba(45,125,255,0.25);background:rgba(45,125,255,0.05);transform:translateY(-2px)}
+.rec-card.selected{border-color:var(--blue);background:rgba(45,125,255,0.1);box-shadow:0 0 0 1px rgba(45,125,255,0.2)}
+.rec-icon{width:36px;height:36px;border-radius:9px;background:rgba(45,125,255,0.12);border:1px solid rgba(45,125,255,0.2);display:flex;align-items:center;justify-content:center;margin:0 auto 10px}
+.rec-icon img{width:16px;height:16px;filter:invert(0.2) sepia(1) saturate(8) hue-rotate(200deg) brightness(1.5)}
+.rec-label{font-size:13px;font-weight:700;letter-spacing:-0.01em}
+.rec-item{display:flex;align-items:flex-start;gap:12px;padding:12px;background:rgba(255,255,255,0.03);border-radius:10px;border:1px solid rgba(255,255,255,0.06)}
+.rec-item-icon{width:28px;height:28px;border-radius:7px;background:rgba(45,125,255,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.rec-item-icon img{width:13px;height:13px;filter:invert(0.2) sepia(1) saturate(8) hue-rotate(200deg) brightness(1.5)}
+.rec-item-title{font-size:13px;font-weight:700;margin-bottom:2px}
+.rec-item-desc{font-size:12px;color:var(--t2);line-height:1.5}
+</style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+
+<nav>
+  <div class="nav-logo"><div class="dot"></div>Editor's <span>Stash</span></div>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#support">Support</a>
+    <a href="#download">Download</a>
+  </div>
+  <a class="nav-btn" href="#download">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Free Download
+  </a>
+</nav>
+
+<section class="hero">
+  <div class="hero-badge">Free &middot; Windows 10/11 &middot; No account needed</div>
+  <div class="hero-eyebrow">Creator Toolkit</div>
+  <h1>Your editing<br/><span class="accent">best friend.</span></h1>
+  <p class="hero-sub">Download videos, remove backgrounds with AI, convert files and manage your assets &mdash; everything you reach for mid-edit, finally in one place.</p>
+  <div class="hero-actions">
+    <a class="btn-primary" href="#download">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download for Windows
+    </a>
+    <a class="btn-ghost" href="#features">See what&rsquo;s inside</a>
+  </div>
+  <div class="hero-tags">
+    <span class="tag">yt-dlp powered</span>
+    <span class="tag">BiRefNet AI</span>
+    <span class="tag">FFmpeg converter</span>
+    <span class="tag">100% offline</span>
+    <span class="tag">Free forever</span>
+  </div>
+</section>
+
+<div class="app-preview">
+  <div class="window">
+    <div class="win-bar">
+      <div class="wdot" style="background:#ff5f57"></div>
+      <div class="wdot" style="background:#ffbd2e"></div>
+      <div class="wdot" style="background:#28c840"></div>
+      <div class="win-title">Editor's Stash v1.0.1</div>
+    </div>
+    <div class="win-body">
+      <div class="win-sb">
+        <div class="wsb on"><img src="https://api.iconify.design/lucide:download.svg"/></div>
+        <div class="wsb"><img src="https://api.iconify.design/lucide:database.svg"/></div>
+        <div class="wsb"><img src="https://api.iconify.design/lucide:repeat.svg"/></div>
+        <div class="wsb"><img src="https://api.iconify.design/lucide:eraser.svg"/></div>
+      </div>
+      <div class="win-main">
+        <div><div class="wph">Downloads</div><div class="wsub">Paste a YouTube or TikTok URL &mdash; pick your action</div></div>
+        <div class="wbox">
+          <div class="winp"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity:.4;flex-shrink:0"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>https://youtube.com/watch?v=dQw4w9WgXcQ</div>
+          <div class="wchips"><div class="wchip on">MP4</div><div class="wchip">MP3</div><div class="wchip">WAV</div><div style="width:1px;background:var(--line);margin:0 3px"></div><div class="wchip on">1080p</div><div class="wchip">4K</div><div class="wchip">720p</div></div>
+        </div>
+        <div class="witem">
+          <div class="wthmb"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" opacity=".8"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></div>
+          <div style="flex:1;min-width:0"><div class="winame">Never Gonna Give You Up &mdash; Rick Astley.mp4</div><div class="wtrack"><div class="wfill" id="wf"></div></div></div>
+          <div class="wbtns"><div class="wbtn p">&#8595; Save</div><div class="wbtn s">+ Stash</div></div>
+        </div>
+        <div class="witem" style="opacity:0.55">
+          <div class="wthmb" style="background:linear-gradient(135deg,#400a60,#8b2fff)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" opacity=".8"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
+          <div style="flex:1;min-width:0"><div class="winame">lofi type beat 2024.mp3</div><div class="wtrack"><div class="wfill" style="width:100%;background:var(--green)"></div></div></div>
+          <div class="wbtns"><div class="wbtn p" style="background:var(--green);color:#000">Done</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DOWNLOADER -->
+<section id="downloader" class="dl-demo-sec">
+  <div class="dl-demo-inner">
+    <div class="reveal">
+      <div class="slabel">Downloader</div>
+      <h2 class="stitle">Paste. Pick.<br/>Download.</h2>
+      <p class="ssub" style="margin-bottom:40px">The fastest way to grab content from YouTube and TikTok. No browser extensions, no websites, no nonsense.</p>
+      <div class="dl-steps">
+        <div class="dl-step"><div class="dl-sn">1</div><div><div class="dl-st">Paste any URL</div><div class="dl-sd">Drop a YouTube or TikTok link in the input. Or just copy it anywhere on your PC &mdash; the clipboard watcher detects it and drops a banner instantly.</div></div></div>
+        <div class="dl-step"><div class="dl-sn">2</div><div><div class="dl-st">Pick format & quality</div><div class="dl-sd">Choose MP4, MP3 or WAV. Pick up to 4K for video. Hit Fetch Info to pull the thumbnail and confirm what you&rsquo;re downloading.</div></div></div>
+        <div class="dl-step"><div class="dl-sn">3</div><div><div class="dl-st">Save or Stash it</div><div class="dl-sd">Hit <strong style="color:var(--text)">Download</strong> to save to your Downloads folder, or <strong style="color:var(--text)">+ Stash</strong> to add it straight to your asset library. Queue multiple at once.</div></div></div>
+        <div class="dl-step"><div class="dl-sn">4</div><div><div class="dl-st">Clipboard watcher</div><div class="dl-sd">Copy a YouTube or TikTok URL anywhere &mdash; Editor&rsquo;s Stash picks it up automatically. A banner drops down so you can start without even switching windows.</div></div></div>
+      </div>
+    </div>
+    <div class="reveal rd2">
+      <div class="dm-platforms" style="margin-bottom:12px">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t3)">Works with:</span>
+        <div class="dm-plat"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>YouTube</div>
+        <div class="dm-plat"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/></svg>TikTok</div>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t3)">+ 1000s more via yt-dlp</span>
+      </div>
+      <div class="dl-mockup">
+        <div class="dm-hdr"><div class="dm-ht">Downloads</div><div class="dm-hs">Paste a YouTube or TikTok URL</div></div>
+        <div class="dm-body">
+          <div class="dm-clip"><div class="dm-clip-dot"></div><div style="flex:1;font-size:11px;color:var(--t2)">Clipboard: <strong style="color:var(--text)">youtube.com/watch?v=dQw...</strong></div><div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--blue)">Use &#8599;</div></div>
+          <div class="dm-url"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity:.4;flex-shrink:0"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>https://www.youtube.com/watch?v=dQw4w9WgXcQ</div>
+          <div class="dm-row"><div class="dm-lbl">Format:</div><div class="dm-chips"><div class="dm-chip on">MP4</div><div class="dm-chip">MP3</div><div class="dm-chip">WAV</div></div><div class="dm-lbl" style="margin-left:4px">Quality:</div><div class="dm-chips"><div class="dm-chip">4K</div><div class="dm-chip on">1080p</div><div class="dm-chip">720p</div><div class="dm-chip">480p</div></div></div>
+          <div class="dm-btn"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Fetch Info</div>
+          <div class="dm-div"></div>
+          <div class="dm-qlbl">Queue</div>
+          <div class="dm-item"><div class="dm-thumb" style="background:linear-gradient(135deg,#1a3fa0,#2d7dff)"></div><div style="flex:1;min-width:0"><div class="dm-iname">Never Gonna Give You Up.mp4</div><div class="dm-prog"><div class="dm-pf" id="dmf" style="width:0%"></div></div></div><div class="dm-acts"><div class="dm-act p">Save</div><div class="dm-act s">Stash</div></div></div>
+          <div class="dm-item" style="opacity:0.5"><div class="dm-thumb" style="background:linear-gradient(135deg,#0a2040,#1a4dc8)"></div><div style="flex:1;min-width:0"><div class="dm-iname">lofi type beat.mp3</div><div class="dm-prog"><div class="dm-pf" style="width:100%;background:var(--green)"></div></div></div><div class="dm-acts"><div class="dm-act p" style="background:var(--green);color:#000">Done</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features" class="feat-sec">
+  <div class="si">
+    <div class="slabel reveal">Features</div>
+    <h2 class="stitle reveal">Built for creators<br/>who move fast</h2>
+    <p class="ssub reveal rd1">No subscriptions. No cloud. No telemetry. Just tools that work.</p>
+    <div class="fgrid">
+      <div class="fcard reveal"><div class="ficon"><img src="https://api.iconify.design/lucide:download.svg"/></div><div class="ftitle">YouTube & TikTok Downloads</div><div class="fdesc">Paste any YouTube or TikTok URL and grab it as MP4, MP3 or WAV in up to 4K. The clipboard watcher fires a banner the moment you copy a link anywhere on your PC &mdash; no switching windows. Queue unlimited downloads at once.</div><span class="ftag">yt-dlp powered</span></div>
+      <div class="fcard reveal rd1"><div class="ficon"><img src="https://api.iconify.design/lucide:database.svg"/></div><div class="ftitle">Asset Stash</div><div class="fdesc">Your local media library. Drag in images, video and audio files, search, filter by type and preview everything inline. Add directly from downloads or the background remover. Perfect for managing thumbnails, B-roll, sound effects and overlays.</div><span class="ftag">Local &middot; persistent</span></div>
+      <div class="fcard reveal rd2"><div class="ficon"><img src="https://api.iconify.design/lucide:eraser.svg"/></div><div class="ftitle">AI Background Remover</div><div class="fdesc">Remove backgrounds from images using BiRefNet &mdash; one of the most accurate local AI models available. Smart contrast-based edge refinement automatically cleans up hair, fur and complex edges without any manual work. Switch between 4 models including an anime-optimised option.</div><span class="ftag">BiRefNet &middot; 4 models</span></div>
+      <div class="fcard reveal"><div class="ficon"><img src="https://api.iconify.design/lucide:repeat.svg"/></div><div class="ftitle">File Converter</div><div class="fdesc">Convert any video, audio or image file to any other format via FFmpeg. Turn an MP4 into a GIF for Discord, a WAV into MP3 for sharing, a PNG into WEBP for the web. Your original files are always preserved &mdash; converted versions are always saved as new files.</div><span class="ftag">FFmpeg &middot; all formats</span></div>
+      <div class="fcard reveal rd1"><div class="ficon"><img src="https://api.iconify.design/lucide:shield.svg"/></div><div class="ftitle">100% Private & Local</div><div class="fdesc">No account, no login and no cloud storage. Every tool runs locally on your machine. There is zero telemetry and zero analytics. Your files never reach a server unless you explicitly paste a URL to download something. Built for creators who care about their privacy.</div><span class="ftag">Offline &middot; open source</span></div>
+      <div class="fcard reveal rd2"><div class="ficon"><img src="https://api.iconify.design/lucide:zap.svg"/></div><div class="ftitle">Clipboard Watcher</div><div class="fdesc">Copy any YouTube or TikTok link from your browser, a Discord message or anywhere else on your PC and a banner slides into Editor's Stash automatically. One click to queue the download &mdash; you never need to leave what you're doing.</div><span class="ftag">Auto-detection</span></div>
+          <div class="fcard reveal"><div class="ficon"><img src="https://api.iconify.design/lucide:image.svg"/></div><div class="ftitle">Thumbnail Organiser</div><div class="fdesc">Store and organise your thumbnail PNGs, background assets and graphic elements in the Stash. Preview at a glance, open directly in your editor or drag into any app. Never hunt for that one PNG again.</div><span class="ftag">Asset library</span></div>
+      <div class="fcard reveal rd1"><div class="ficon"><img src="https://api.iconify.design/lucide:music.svg"/></div><div class="ftitle">Audio Extraction</div><div class="fdesc">Pull audio from any video file as MP3 or WAV in one click via the converter. Grab backing tracks from YouTube videos, extract vocals or isolate sound effects for your edits.</div><span class="ftag">FFmpeg &middot; MP3 &amp; WAV</span></div>
+      <div class="fcard reveal rd2"><div class="ficon"><img src="https://api.iconify.design/lucide:refresh-cw.svg"/></div><div class="ftitle">Auto Updates</div><div class="fdesc">Editor's Stash checks for updates automatically and installs them in the background. You always have the latest features and fixes without lifting a finger.</div><span class="ftag">Silent updates</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURE RECOMMENDER -->
+<section id="recommender" style="position:relative;z-index:1;border-top:1px solid var(--line)">
+  <div class="si">
+    <div class="slabel reveal">Find your tools</div>
+    <h2 class="stitle reveal">What kind of creator are you?</h2>
+    <p class="ssub reveal rd1" style="margin-bottom:48px">Tell us what you make and we'll show you which features to focus on.</p>
+    <div id="rec-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:40px">
+      <div class="rec-card reveal" onclick="selectCreator(this,'youtube')"><div class="rec-icon"><img src="https://api.iconify.design/lucide:video.svg"/></div><div class="rec-label">YouTube Creator</div></div>
+      <div class="rec-card reveal rd1" onclick="selectCreator(this,'tiktok')"><div class="rec-icon"><img src="https://api.iconify.design/lucide:smartphone.svg"/></div><div class="rec-label">TikTok / Reels</div></div>
+      <div class="rec-card reveal rd2" onclick="selectCreator(this,'design')"><div class="rec-icon"><img src="https://api.iconify.design/lucide:pen-tool.svg"/></div><div class="rec-label">Graphic Designer</div></div>
+      <div class="rec-card reveal rd1" onclick="selectCreator(this,'music')"><div class="rec-icon"><img src="https://api.iconify.design/lucide:music.svg"/></div><div class="rec-label">Music Producer</div></div>
+      <div class="rec-card reveal rd2" onclick="selectCreator(this,'streamer')"><div class="rec-icon"><img src="https://api.iconify.design/lucide:monitor.svg"/></div><div class="rec-label">Streamer</div></div>
+      <div class="rec-card reveal rd3" onclick="selectCreator(this,'editor')"><div class="rec-icon"><img src="https://api.iconify.design/lucide:scissors.svg"/></div><div class="rec-label">Video Editor</div></div>
+    </div>
+    <div id="rec-result" style="display:none;background:rgba(45,125,255,0.06);border:1px solid rgba(45,125,255,0.18);border-radius:16px;padding:32px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--blue);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:14px">Recommended for you</div>
+      <div id="rec-items" style="display:flex;flex-direction:column;gap:10px"></div>
+    </div>
+  </div>
+</section>
+
+<!-- SUPPORT -->
+<section id="support" class="sup-sec">
+  <div class="sup-inner">
+    <div class="reveal">
+      <div class="slabel">Support</div>
+      <h2 class="stitle">Getting a blue<br/>screen warning?</h2>
+      <p class="ssub" style="margin-bottom:36px">Completely normal. Windows shows this for every unsigned app from an indie developer. Here&rsquo;s exactly what&rsquo;s happening and how to get past it in 10 seconds.</p>
+      <div class="bsteps">
+        <div class="bstep"><div class="bstep-n">1</div><div><div class="bstep-t">Why it happens</div><div class="bstep-d">Microsoft charges ~$300/year for code-signing certificates. Editor's Stash is completely free, so it's unsigned. Windows flags all unsigned apps by default &mdash; safe or not.</div></div></div>
+        <div class="bstep"><div class="bstep-n">2</div><div><div class="bstep-t">Click "More info"</div><div class="bstep-d">When the blue SmartScreen dialog appears, don't close it. Click <strong style="color:var(--text)">"More info"</strong> in the middle of the dialog.</div></div></div>
+        <div class="bstep"><div class="bstep-n">3</div><div><div class="bstep-t">Click "Run anyway"</div><div class="bstep-d">A <strong style="color:var(--text)">"Run anyway"</strong> button appears at the bottom. Click it. App opens normally &mdash; you'll never see this again for this version.</div></div></div>
+        <div class="bstep"><div class="bstep-n">4</div><div><div class="bstep-t">Is it safe?</div><div class="bstep-d">Yes. Runs 100% offline. Zero background network requests. Only connects when you explicitly paste a URL to download something.</div></div></div>
+      </div>
+    </div>
+    <div class="reveal rd2">
+      <div class="bwin">
+        <div class="bwin-top">
+          <span class="bwin-emoji"></span>
+          <div class="bwin-h">Windows protected<br/>your PC</div>
+          <div class="bwin-b">Microsoft Defender SmartScreen prevented an unrecognized app from starting.<br/><br/><strong>App:</strong> EditorStash.exe<br/><strong>Publisher:</strong> Unknown publisher</div>
+        </div>
+        <div class="bwin-foot"><div class="bwin-mi">&#9654; More info</div><div class="bwin-no">Don't run</div></div>
+      </div>
+      <div class="safe">&#10003; No viruses &nbsp;&middot;&nbsp; &#10003; No spyware &nbsp;&middot;&nbsp; &#10003; No background connections<br/>&#10003; 100% offline &nbsp;&middot;&nbsp; &#10003; Open source</div>
+    </div>
+  </div>
+</section>
+
+<!-- DOWNLOAD -->
+<section id="download" class="get-sec">
+  <div class="si">
+    <div class="slabel reveal" style="justify-content:center">Download</div>
+    <h2 class="stitle reveal" style="text-align:center">Your editing best friend,<br/>for free.</h2>
+    <p class="ssub reveal rd1" style="margin:0 auto;text-align:center">No installer. No account. No strings attached. Just download the .exe and run it.</p>
+    <div class="dlcard reveal rd2">
+      <div class="dlver">v1.0.1 &mdash; Latest</div>
+      <div class="dltitle">Windows Portable</div>
+      <div class="dlsub">Download the .exe and run directly &mdash; no installation needed. Windows 10 &amp; 11 64-bit. If Windows warns you on first launch, see the support section above.</div>
+      <a class="dlbtn" href="https://github.com/YOUR_USERNAME/editors-stash/releases/latest/download/EditorStash.exe">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download EditorStash.exe
+      </a>
+      <div class="dlmeta"><span>&#10003; Windows 10/11</span><span>&#10003; Portable .exe</span><span>&#10003; No installer</span><span>&#10003; Free forever</span></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="flogo">Editor's <span>Stash</span></div>
+  <div class="fnote">Your editing best friend &middot; Free forever &middot; Windows</div>
+  <div class="flinks"><a href="#downloader">Downloader</a><a href="#features">Features</a><a href="#support">Support</a><a href="#download">Download</a></div>
+</footer>
+
+<script>
+(function(){
+  const c=document.getElementById('bg-canvas'),ctx=c.getContext('2d');
+  let W,H,t=0;
+  const orbs=[{bx:.08,by:.9,rx:.2,ry:.15,s:.5,sz:.7,a:.1},{bx:.92,by:.05,rx:.18,ry:.2,s:.7,sz:.65,a:.08},{bx:.5,by:.5,rx:.25,ry:.2,s:.35,sz:.5,a:.05},{bx:.2,by:.35,rx:.1,ry:.15,s:.9,sz:.3,a:.04}];
+  const ph=orbs.map(()=>[Math.random()*Math.PI*2,Math.random()*Math.PI*2]);
+  function resize(){W=c.width=innerWidth;H=c.height=innerHeight}
+  resize();window.addEventListener('resize',resize);
+  function draw(){
+    t+=.004;ctx.fillStyle='rgba(2,4,7,.35)';ctx.fillRect(0,0,W,H);
+    orbs.forEach((o,i)=>{
+      const x=(o.bx+Math.sin(t*o.s+ph[i][0])*o.rx)*W,y=(o.by+Math.cos(t*o.s*.7+ph[i][1])*o.ry)*H,r=Math.max(W,H)*o.sz;
+      const g=ctx.createRadialGradient(x,y,0,x,y,r);
+      g.addColorStop(0,`rgba(45,125,255,${o.a})`);g.addColorStop(.4,`rgba(45,125,255,${o.a*.3})`);g.addColorStop(1,'rgba(45,125,255,0)');
+      ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    });requestAnimationFrame(draw);
+  }
+  ctx.fillStyle='#020407';ctx.fillRect(0,0,9999,9999);draw();
+})();
+let p=0;
+setInterval(()=>{p=p>=100?0:p+0.35;['wf','dmf'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.width=p+'%'});},50);
+const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in')}),{threshold:0.1});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+const recData = {
+  youtube: [
+    {icon:'lucide:download.svg',title:'Downloader',desc:'Grab video and audio from YouTube at up to 4K. Save as MP4 or rip the audio as MP3/WAV for your edits.'},
+    {icon:'lucide:eraser.svg',title:'Background Remover',desc:'Cut subjects out of images for thumbnails with BiRefNet AI &mdash; clean edges without Photoshop.'},
+    {icon:'lucide:database.svg',title:'Asset Stash',desc:'Keep your thumbnail PNGs, overlays and B-roll organised in one searchable library.'},
+  ],
+  tiktok: [
+    {icon:'lucide:download.svg',title:'Downloader',desc:'Download TikTok videos without watermarks in MP4. Great for saving inspiration or repurposing content.'},
+    {icon:'lucide:repeat.svg',title:'Converter',desc:'Convert clips to the right format and resolution for any platform quickly via FFmpeg.'},
+    {icon:'lucide:eraser.svg',title:'Background Remover',desc:'Remove backgrounds from product shots or profile images without any subscription.'},
+  ],
+  design: [
+    {icon:'lucide:eraser.svg',title:'Background Remover',desc:'The fastest way to cut out subjects for thumbnails, ads and graphics. BiRefNet handles hair and complex edges automatically.'},
+    {icon:'lucide:database.svg',title:'Asset Stash',desc:'Keep your PNGs, logos, textures and reference images in one local library. Preview and access instantly.'},
+    {icon:'lucide:repeat.svg',title:'Converter',desc:'Batch-convert images between PNG, WEBP, JPG and GIF without needing Photoshop or online tools.'},
+  ],
+  music: [
+    {icon:'lucide:download.svg',title:'Downloader',desc:'Grab backing tracks and reference tracks from YouTube as WAV or MP3. Queue multiple downloads at once.'},
+    {icon:'lucide:music.svg',title:'Audio Extraction',desc:'Extract audio from any video file as MP3 or WAV in one click. Pull stems, samples or reference mixes.'},
+    {icon:'lucide:database.svg',title:'Asset Stash',desc:'Organise your samples, loops and reference tracks in a local library you can search and preview instantly.'},
+  ],
+  streamer: [
+    {icon:'lucide:download.svg',title:'Downloader',desc:'Download clip compilations, VODs or sound effects from YouTube for your stream highlights and overlays.'},
+    {icon:'lucide:eraser.svg',title:'Background Remover',desc:'Cut yourself out of images for overlays, panels and stream graphics without a green screen.'},
+    {icon:'lucide:repeat.svg',title:'Converter',desc:'Convert recordings and clips between formats. Turn long VODs into shareable MP4s or extract audio for podcasts.'},
+  ],
+  editor: [
+    {icon:'lucide:download.svg',title:'Downloader',desc:'Download stock footage, sound effects and reference clips from YouTube directly into your project folder.'},
+    {icon:'lucide:eraser.svg',title:'Background Remover',desc:'Remove backgrounds from client photos and assets in seconds. Smart edge refinement handles the tricky bits.'},
+    {icon:'lucide:database.svg',title:'Asset Stash',desc:'Your local asset browser. Keep project assets, overlays and templates organised and accessible without leaving the app.'},
+  ],
+};
+
+function selectCreator(el, type) {
+  document.querySelectorAll('.rec-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  const items = recData[type];
+  const result = document.getElementById('rec-result');
+  const container = document.getElementById('rec-items');
+  container.innerHTML = items.map(it => `
+    <div class="rec-item">
+      <div class="rec-item-icon"><img src="https://api.iconify.design/${it.icon}"/></div>
+      <div><div class="rec-item-title">${it.title}</div><div class="rec-item-desc">${it.desc}</div></div>
+    </div>
+  `).join('');
+  result.style.display = 'block';
+  result.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+</script>
+</body>
+</html>
